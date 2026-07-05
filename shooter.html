@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Shooter Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            overflow: hidden;
+        }
+
+        .game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #0f3460 0%, #533483 100%);
+            display: none;
+            overflow: hidden;
+        }
+
+        #gameContainer.active {
+            display: block;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .menu {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 100;
+        }
+
+        .menu-content {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 60px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .menu h1 {
+            font-size: 4em;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #00ff88, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 18px 40px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .difficulty-btn {
+            color: white;
+            width: 180px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .difficulty-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .difficulty-btn:hover::before {
+            left: 0;
+        }
+
+        .difficulty-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .easy {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #333;
+        }
+
+        .easy::before {
+            background: linear-gradient(135deg, #6ee7a0 0%, #7bc5e0 100%);
+        }
+
+        .medium {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: #333;
+        }
+
+        .medium::before {
+            background: linear-gradient(135deg, #f05080 0%, #fed330 100%);
+        }
+
+        .hard {
+            background: linear-gradient(135deg, #ff0000 0%, #8b0000 100%);
+            color: white;
+        }
+
+        .hard::before {
+            background: linear-gradient(135deg, #cc0000 0%, #660000 100%);
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 30px;
+            font-size: 1.05em;
+            line-height: 1.8;
+            color: #fff;
+            border-left: 4px solid #00ff88;
+        }
+
+        .instructions h3 {
+            margin-bottom: 15px;
+            color: #00ff88;
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            color: #00ff88;
+            font-size: 1.2em;
+            font-weight: bold;
+            z-index: 50;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .hud-item {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 2px solid #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+            text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+        }
+
+        .crosshair {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            pointer-events: none;
+            z-index: 150;
+            display: none;
+        }
+
+        .crosshair-dot {
+            position: absolute;
+            background: #00ff88;
+            border-radius: 50%;
+        }
+
+        .crosshair-dot.center {
+            width: 6px;
+            height: 6px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+        }
+
+        .crosshair-line {
+            position: absolute;
+            background: #00ff88;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair-line.h {
+            width: 20px;
+            height: 2px;
+            margin-left: 10px;
+        }
+
+        .crosshair-line.v {
+            width: 2px;
+            height: 20px;
+            margin-top: 10px;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.98);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            z-index: 200;
+            display: none;
+            min-width: 500px;
+            border: 3px solid #00ff88;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+
+        .game-over h2 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .game-over p {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #e0e0e0;
+        }
+
+        .game-over button {
+            margin-top: 30px;
+            background: linear-gradient(135deg, #00ff88 0%, #00ffff 100%);
+            color: #1a1a2e;
+            padding: 15px 40px;
+        }
+
+        .game-over button:hover {
+            transform: scale(1.05);
+        }
+
+        .wave-notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            color: #00ff88;
+            z-index: 100;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+            pointer-events: none;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .menu-content {
+                padding: 40px;
+            }
+
+            .menu h1 {
+                font-size: 2.5em;
+            }
+
+            .game-over {
+                min-width: auto;
+                width: 90%;
+                padding: 30px;
+            }
+
+            .hud {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                font-size: 1em;
+            }
+
+            .hud-item {
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div id="menu" class="menu">
+            <div class="menu-content">
+                <h1>⚔️ ADVANCED SHOOTER ⚔️</h1>
+                <p style="color: #00ff88; margin-bottom: 40px; font-size: 1.2em;">Choose Your Difficulty</p>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn easy" onclick="startGame('easy')">🟢 EASY</button>
+                    <button class="difficulty-btn medium" onclick="startGame('medium')">🟡 MEDIUM</button>
+                    <button class="difficulty-btn hard" onclick="startGame('hard')">🔴 HARD</button>
+                </div>
+                <div class="instructions">
+                    <h3>📋 HOW TO PLAY:</h3>
+                    <strong>CONTROLS:</strong><br>
+                    WASD or Arrow Keys - Move • Mouse - Aim • Click - Shoot<br><br>
+                    <strong>FEATURES:</strong><br>
+                    ✓ Multiple Enemy Types • ✓ Power-ups • ✓ Progressive Waves<br>
+                    ✓ Dynamic Difficulty • ✓ High Score Tracking<br><br>
+                    <strong>OBJECTIVE:</strong><br>
+                    Survive and defeat waves of enemies. Each wave gets harder!
+                </div>
+            </div>
+        </div>
+
+        <div id="gameContainer" class="gameContainer">
+            <canvas id="gameCanvas"></canvas>
+            <div class="crosshair" id="crosshair">
+                <div class="crosshair-dot center"></div>
+                <div class="crosshair-line h"></div>
+                <div class="crosshair-line v"></div>
+            </div>
+            <div class="hud">
+                <div class="hud-item">❤️ Health: <span id="playerHealth">100</span></div>
+                <div class="hud-item">🎯 Score: <span id="score">0</span></div>
+                <div class="hud-item">👾 Enemies: <span id="enemyCount">0</span></div>
+                <div class="hud-item">🌊 Wave: <span id="waveCount">1</span></div>
+            </div>
+            <div class="wave-notification" id="waveNotification"></div>
+            <div class="game-over" id="gameOverScreen">
+                <h2 id="gameOverTitle">GAME OVER!</h2>
+                <p>Final Score: <span id="finalScore">0</span></p>
+                <p>Enemies Eliminated: <span id="enemiesKilled">0</span></p>
+                <p>Waves Survived: <span id="wavesSurvived">0</span></p>
+                <button onclick="location.reload()">🎮 Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="shooter.js"></script>
+</body>
+</html>
